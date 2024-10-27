@@ -248,6 +248,27 @@ class YG_EXPORT Node : public ::YGNode {
     children_ = children;
   }
 
+  void setTag(int t) {
+    tag_ = t;
+  }
+
+  int getTag() {
+    return tag_;
+  }
+
+  std::string sizingModeToString(SizingMode mode) {
+    switch (mode) {
+      case SizingMode::StretchFit:
+        return "StretchFit";
+      case SizingMode::MaxContent:
+        return "MaxContent";
+      case SizingMode::FitContent:
+        return "FitContent";
+      default:
+        return "Unknown SizingMode";
+    }
+  }
+
   // TODO: rvalue override for setChildren
 
   void setConfig(Config* config);
@@ -324,9 +345,11 @@ class YG_EXPORT Node : public ::YGNode {
   const Config* config_;
   std::array<Style::Length, 2> processedDimensions_{
       {StyleLength::undefined(), StyleLength::undefined()}};
+  int tag_ = 0;
 };
 
 inline Node* resolveRef(const YGNodeRef ref) {
+  // 安全类型转换
   return static_cast<Node*>(ref);
 }
 

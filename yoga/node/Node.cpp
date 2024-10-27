@@ -372,7 +372,7 @@ void Node::clearChildren() {
 }
 
 // Other Methods
-
+// 克隆的原因是，某些yoga节点getOwner会返回 nullprt，这种情况通常发生在该yoga节点在多个树之间共享
 void Node::cloneChildrenIfNeeded() {
   size_t i = 0;
   for (Node*& child : children_) {

@@ -31,6 +31,7 @@ inline bool isColumn(const FlexDirection flexDirection) {
 inline FlexDirection resolveDirection(
     const FlexDirection flexDirection,
     const Direction direction) {
+  // 处理 RTL 布局，一般阿拉伯语言下要求行为RTL，列的话基本都是从上到下的
   if (direction == Direction::RTL) {
     if (flexDirection == FlexDirection::Row) {
       return FlexDirection::RowReverse;

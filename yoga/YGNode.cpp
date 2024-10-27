@@ -364,3 +364,10 @@ bool YGNodeCanUseCachedMeasurement(
       marginColumn,
       resolveRef(config));
 }
+
+void YGNodeSetTag(YGNodeRef node, int i) {
+  resolveRef(node)->setTag(i);
+}
+int YGNodeGetTag(YGNodeRef node) {
+  return resolveRef(node)->getTag();
+}

@@ -23,9 +23,10 @@ FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(${YOGA_ROOT}/yoga ${CMAKE_CURRENT_BINARY_DIR}/yoga)
 
+# 只测试指定目录下的文件
 file(GLOB SOURCES CONFIGURE_DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/**/*.cpp)
+    # ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/self_test/*.cpp)
 
 enable_testing()
 

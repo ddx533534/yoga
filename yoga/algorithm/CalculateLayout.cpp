@@ -31,6 +31,7 @@
 #include <yoga/node/Node.h>
 #include <yoga/numeric/Comparison.h>
 #include <yoga/numeric/FloatOptional.h>
+#include <iostream>
 
 namespace facebook::yoga {
 
@@ -478,6 +479,10 @@ static void zeroOutLayoutRecursively(yoga::Node* const node) {
 
 static void cleanupContentsNodesRecursively(yoga::Node* const node) {
   for (auto child : node->getChildren()) {
+    // std::cout << "cleanup content node: " << child->getTag()
+    //           << " display: " << (node->style().display() ==
+    //           Display::Contents)
+    //           << std::endl;
     if (child->style().display() == Display::Contents) {
       child->getLayout() = {};
       child->setLayoutDimension(0, Dimension::Width);
@@ -499,6 +504,7 @@ static float calculateAvailableInnerDimension(
     const float paddingAndBorder,
     const float ownerDim,
     const float ownerWidth) {
+  // 内部可用空间，对于root未定义的nan，此处的内部可用空间是Nan
   float availableInnerDim = availableDim - paddingAndBorder;
   // Max dimension overrides predefined dimension value; Min dimension in turn
   // overrides both of the above
@@ -1239,6 +1245,14 @@ static void calculateLayoutImpl(
     const uint32_t depth,
     const uint32_t generationCount,
     const LayoutPassReason reason) {
+  std::cout << "node tag: " << node->getTag()
+            << ",availableWidth: " << availableWidth
+            << ",availableHeight: " << availableHeight
+            << ",widthSizingMode: " << node->sizingModeToString(widthSizingMode)
+            << ",heightSizingMode: "
+            << node->sizingModeToString(heightSizingMode)
+            << ",ownerWidth: " << ownerWidth << ",ownerHeight: " << ownerHeight
+            << std::endl;
   yoga::assertFatalWithNode(
       node,
       yoga::isUndefined(availableWidth)
@@ -1260,16 +1274,20 @@ static void calculateLayoutImpl(
   const Direction direction = node->resolveDirection(ownerDirection);
   node->setLayoutDirection(direction);
 
+  // 一般情况下，flexRowDirection 就是 row
   const FlexDirection flexRowDirection =
       resolveDirection(FlexDirection::Row, direction);
+  // 一般情况下，flexColumnDirection 就是 Column
   const FlexDirection flexColumnDirection =
       resolveDirection(FlexDirection::Column, direction);
-
+  // 起始边的设定也需要处理 RTL 场景
   const auto startEdge =
       direction == Direction::LTR ? PhysicalEdge::Left : PhysicalEdge::Right;
   const auto endEdge =
       direction == Direction::LTR ? PhysicalEdge::Right : PhysicalEdge::Left;
 
+  // 对于 root0，child1和child2，宿主的宽高是不知道的
+  // 通过yogastyle margin 计算并更新 layout margin
   const float marginRowLeading = node->style().computeInlineStartMargin(
       flexRowDirection, direction, ownerWidth);
   node->setLayoutMargin(marginRowLeading, startEdge);
@@ -1283,9 +1301,11 @@ static void calculateLayoutImpl(
       flexColumnDirection, direction, ownerWidth);
   node->setLayoutMargin(marginColumnTrailing, PhysicalEdge::Bottom);
 
+  // row and column margin 这信息看起来需要单独记录下
   const float marginAxisRow = marginRowLeading + marginRowTrailing;
   const float marginAxisColumn = marginColumnLeading + marginColumnTrailing;
 
+  // 通过 style border 计算并更新 layout border，看起来不需要保存信息
   node->setLayoutBorder(
       node->style().computeInlineStartBorder(flexRowDirection, direction),
       startEdge);
@@ -1299,6 +1319,7 @@ static void calculateLayoutImpl(
       node->style().computeInlineEndBorder(flexColumnDirection, direction),
       PhysicalEdge::Bottom);
 
+  // 通过 style padding 计算并更新 layout padding，看起来不需要保存信息
   node->setLayoutPadding(
       node->style().computeInlineStartPadding(
           flexRowDirection, direction, ownerWidth),
@@ -1318,8 +1339,12 @@ static void calculateLayoutImpl(
 
   // Clean and update all display: contents nodes with a direct path to the
   // current node as they will not be traversed
+  // 简而言之,在布局系统中，display: contents
+  // 的节点在视觉上不占用空间，而是将其子节点直接展现在父节点的上下文中
+  // 因此需要清理下这些节点的布局信息，但并没有在节点树将其移除
   cleanupContentsNodesRecursively(node);
 
+  // todo 暂时不考虑，目前拥有测量函数的是文本，此分支走不到
   if (node->hasMeasureFunc()) {
     measureNodeWithMeasureFunc(
         node,
@@ -1336,6 +1361,7 @@ static void calculateLayoutImpl(
   }
 
   const auto childCount = node->getLayoutChildCount();
+  // 没有子节点走此分支
   if (childCount == 0) {
     measureNodeWithoutChildren(
         node,
@@ -1366,35 +1392,48 @@ static void calculateLayoutImpl(
 
   // At this point we know we're going to perform work. Ensure that each child
   // has a mutable copy.
+  // 必要情况下拷贝下孩子
   node->cloneChildrenIfNeeded();
   // Reset layout flags, as they could have changed.
   node->setLayoutHadOverflow(false);
 
   // STEP 1: CALCULATE VALUES FOR REMAINDER OF ALGORITHM
+
+  // 弹性布局主轴
   const FlexDirection mainAxis =
       resolveDirection(node->style().flexDirection(), direction);
+  // 弹性布局副轴
   const FlexDirection crossAxis = resolveCrossDirection(mainAxis, direction);
+  // 主轴是否是行
   const bool isMainAxisRow = isRow(mainAxis);
-  const bool isNodeFlexWrap = node->style().flexWrap() != Wrap::NoWrap;
 
+  const bool isNodeFlexWrap = node->style().flexWrap() != Wrap::NoWrap;
+  // 主轴上的宿主长度
   const float mainAxisOwnerSize = isMainAxisRow ? ownerWidth : ownerHeight;
+  // 副轴上的宿主长度
   const float crossAxisOwnerSize = isMainAxisRow ? ownerHeight : ownerWidth;
 
+  // 主轴上的padding + border
   const float paddingAndBorderAxisMain =
       paddingAndBorderForAxis(node, mainAxis, direction, ownerWidth);
+  // 副轴上的padding + border
   const float paddingAndBorderAxisCross =
       paddingAndBorderForAxis(node, crossAxis, direction, ownerWidth);
+  // 副轴上开头的 padding和border
   const float leadingPaddingAndBorderCross =
       node->style().computeFlexStartPaddingAndBorder(
           crossAxis, direction, ownerWidth);
-
+  // 主轴sizing模式
   SizingMode sizingModeMainDim =
       isMainAxisRow ? widthSizingMode : heightSizingMode;
+  // 副轴sizing模式
   SizingMode sizingModeCrossDim =
       isMainAxisRow ? heightSizingMode : widthSizingMode;
 
+  // row上的padding + border
   const float paddingAndBorderAxisRow =
       isMainAxisRow ? paddingAndBorderAxisMain : paddingAndBorderAxisCross;
+  // column上的padding + border
   const float paddingAndBorderAxisColumn =
       isMainAxisRow ? paddingAndBorderAxisCross : paddingAndBorderAxisMain;
 
@@ -1417,6 +1456,11 @@ static void calculateLayoutImpl(
       ownerHeight,
       ownerWidth);
 
+  std::cout << "node   tag: " << node->getTag()
+            << ",availableInnerWidth: " << availableInnerWidth
+            << ",availableInnerHeight: " << availableInnerHeight << std::endl;
+
+  // 转换为主轴和副轴的长度
   float availableInnerMainDim =
       isMainAxisRow ? availableInnerWidth : availableInnerHeight;
   const float availableInnerCrossDim =
@@ -1438,7 +1482,10 @@ static void calculateLayoutImpl(
       layoutMarkerData,
       depth,
       generationCount);
-
+  std::cout << "node   tag: " << node->getTag()
+            << "totalMainDim after computeFlexBasisForChildren:" << totalMainDim
+            << std::endl;
+  // 计算gap
   if (childCount > 1) {
     totalMainDim +=
         node->style().computeGapForAxis(mainAxis, availableInnerMainDim) *
@@ -2235,6 +2282,9 @@ bool calculateLayoutInternal(
       }
     }
   } else if (performLayout) {
+    // 首先判断上一次布局计算缓存是否可用，判断条件：
+    // 1.缓存的可用宽高，等于此次传入的可用宽高
+    // 2.缓存的宽高模式，等于此次传入的宽高模式
     if (yoga::inexactEquals(
             layout->cachedLayout.availableWidth, availableWidth) &&
         yoga::inexactEquals(
@@ -2256,7 +2306,9 @@ bool calculateLayoutInternal(
       }
     }
   }
-
+  // std::cout << "needToVisitNode:" << needToVisitNode << std::endl;
+  // std::cout << "cachedResults is null:" << (cachedResults == nullptr)
+  //           << std::endl;
   if (!needToVisitNode && cachedResults != nullptr) {
     layout->setMeasuredDimension(
         Dimension::Width, cachedResults->computedWidth);
@@ -2283,7 +2335,9 @@ bool calculateLayoutInternal(
 
     layout->lastOwnerDirection = ownerDirection;
     layout->configVersion = node->getConfig()->getVersion();
+    // std::cout << " 更新缓存" << std::endl;
 
+    // 更新缓存
     if (cachedResults == nullptr) {
       layoutMarkerData.maxMeasureCache = std::max(
           layoutMarkerData.maxMeasureCache,
@@ -2324,6 +2378,7 @@ bool calculateLayoutInternal(
         node->getLayout().measuredDimension(Dimension::Height),
         Dimension::Height);
 
+    // 还原标志位
     node->setHasNewLayout(true);
     node->setDirty(false);
   }
@@ -2357,11 +2412,13 @@ void calculateLayout(
   // the input parameters don't change.
   gCurrentGenerationCount.fetch_add(1, std::memory_order_relaxed);
   node->processDimensions();
+  // 解析node direction
   const Direction direction = node->resolveDirection(ownerDirection);
   float width = YGUndefined;
   SizingMode widthSizingMode = SizingMode::MaxContent;
   const auto& style = node->style();
   if (node->hasDefiniteLength(Dimension::Width, ownerWidth)) {
+    std::cout << "hasDefiniteLength" << std::endl;
     width =
         (node->getResolvedDimension(
                  direction,
@@ -2375,12 +2432,14 @@ void calculateLayout(
                  .resolvedMaxDimension(
                      direction, Dimension::Width, ownerWidth, ownerWidth)
                  .isDefined()) {
+    std::cout << "resolvedMaxDimension" << std::endl;
     width = style
                 .resolvedMaxDimension(
                     direction, Dimension::Width, ownerWidth, ownerWidth)
                 .unwrap();
     widthSizingMode = SizingMode::FitContent;
   } else {
+    std::cout << "default mode" << std::endl;
     width = ownerWidth;
     widthSizingMode = yoga::isUndefined(width) ? SizingMode::MaxContent
                                                : SizingMode::StretchFit;
@@ -2412,6 +2471,15 @@ void calculateLayout(
     heightSizingMode = yoga::isUndefined(height) ? SizingMode::MaxContent
                                                  : SizingMode::StretchFit;
   }
+
+  // std::cout << "width:" << width << std::endl;
+  // std::cout << "widthSizingMode:" << (widthSizingMode ==
+  // SizingMode::MaxContent)
+  //           << std::endl;
+  // std::cout << "height:" << height << std::endl;
+  // std::cout << "heightSizingMode:"
+  //           << (heightSizingMode == SizingMode::MaxContent) << std::endl;
+
   if (calculateLayoutInternal(
           node,
           width,

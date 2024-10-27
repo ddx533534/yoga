@@ -282,6 +282,12 @@ YG_EXPORT void YGNodeSetAlwaysFormsContainingBlock(
 YG_EXPORT bool YGNodeGetAlwaysFormsContainingBlock(YGNodeConstRef node);
 
 /**
+ * 给 node 设置个tag
+*/
+YG_EXPORT void YGNodeSetTag(YGNodeRef node, int i);
+YG_EXPORT int YGNodeGetTag(YGNodeRef node);
+
+/**
  * @deprecated
  */
 YG_DEPRECATED(
