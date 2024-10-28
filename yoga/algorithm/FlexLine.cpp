@@ -10,7 +10,7 @@
 #include <yoga/algorithm/BoundAxis.h>
 #include <yoga/algorithm/FlexDirection.h>
 #include <yoga/algorithm/FlexLine.h>
-
+#include <iostream>
 namespace facebook::yoga {
 
 FlexLine calculateFlexLine(
@@ -22,6 +22,14 @@ FlexLine calculateFlexLine(
     const float availableInnerMainDim,
     Node::LayoutableChildren::Iterator& iterator,
     const size_t lineCount) {
+  std::cout << node->getTag()
+            << "-------------- start calculateFlexLine! ----------\n"
+            << std::endl;
+
+  std::cout << node->getTag() << "ownerWidth: " << ownerWidth
+            << ",mainAxisownerSize: " << mainAxisownerSize
+            << ",availableInnerWidth: " << availableInnerWidth
+            << ",availableInnerMainDim: " << availableInnerMainDim << std::endl;
   std::vector<yoga::Node*> itemsInFlow;
   itemsInFlow.reserve(node->getChildCount());
 
@@ -33,10 +41,14 @@ FlexLine calculateFlexLine(
   size_t firstElementInLineIndex = iterator.index();
 
   float sizeConsumedIncludingMinConstraint = 0;
+  // 布局方向，尤其是在处理 margin 和 padding 等属性时需要考虑文本方向。
   const Direction direction = node->resolveDirection(ownerDirection);
+  // 主轴上的flex方向,属性用于设置Flex容器中主轴的方向，从而决定Flex项目在容器中的排列方式
   const FlexDirection mainAxis =
       resolveDirection(node->style().flexDirection(), direction);
+  // 是否允许换行
   const bool isNodeFlexWrap = node->style().flexWrap() != Wrap::NoWrap;
+  // 主轴上的 gap
   const float gap =
       node->style().computeGapForAxis(mainAxis, availableInnerMainDim);
 
@@ -53,6 +65,8 @@ FlexLine calculateFlexLine(
       continue;
     }
 
+    // 自动 margin，用于自动填充 margin，当设置 margin-left(start): auto 和
+    // margin-right(end): auto 时，会自动水平居中
     if (child->style().flexStartMarginIsAuto(mainAxis, ownerDirection)) {
       numberOfAutoMargins++;
     }
@@ -60,6 +74,7 @@ FlexLine calculateFlexLine(
       numberOfAutoMargins++;
     }
 
+    // true
     const bool isFirstElementInLine =
         (endOfLineIndex - firstElementInLineIndex) == 0;
 
@@ -80,6 +95,9 @@ FlexLine calculateFlexLine(
     // If this is a multi-line flow and this item pushes us over the available
     // size, we've hit the end of the current line. Break out of the loop and
     // lay out the current line.
+
+    //  flexBasis长度加上子元素的 margin，加上子元素的前置 gap
+    //  超出可用范围，并且允许换行，以及 items 不为空
     if (sizeConsumedIncludingMinConstraint + flexBasisWithMinAndMaxConstraints +
                 childMarginMainAxis + childLeadingGapMainAxis >
             availableInnerMainDim &&
@@ -91,6 +109,14 @@ FlexLine calculateFlexLine(
         childMarginMainAxis + childLeadingGapMainAxis;
     sizeConsumed += flexBasisWithMinAndMaxConstraints + childMarginMainAxis +
         childLeadingGapMainAxis;
+
+    std::cout << node->getTag() << "sizeConsumed: " << sizeConsumed
+              << ",flexBasisWithMinAndMaxConstraints: "
+              << flexBasisWithMinAndMaxConstraints
+              << ",childMarginMainAxis: " << childMarginMainAxis
+              << ",childLeadingGapMainAxis: " << childLeadingGapMainAxis
+              << ",  child->getLayout().computedFlexBasis,"
+              << (child->getLayout().computedFlexBasis.unwrap()) << std::endl;
 
     if (child->isNodeFlexible()) {
       totalFlexGrowFactors += child->resolveFlexGrow();
@@ -113,7 +139,9 @@ FlexLine calculateFlexLine(
   if (totalFlexShrinkScaledFactors > 0 && totalFlexShrinkScaledFactors < 1) {
     totalFlexShrinkScaledFactors = 1;
   }
-
+  std::cout << node->getTag()
+            << "-------------- end calculateFlexLine! ----------\n"
+            << std::endl;
   return FlexLine{
       .itemsInFlow = std::move(itemsInFlow),
       .sizeConsumed = sizeConsumed,

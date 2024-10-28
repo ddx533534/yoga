@@ -13,6 +13,7 @@
 #include <yoga/debug/Log.h>
 #include <yoga/event/event.h>
 #include <yoga/node/Node.h>
+#include <iostream>
 
 using namespace facebook;
 using namespace facebook::yoga;
@@ -56,6 +57,24 @@ void YGNodeFree(const YGNodeRef nodeRef) {
 
   Event::publish<Event::NodeDeallocation>(node, {YGNodeGetConfig(node)});
   delete resolveRef(node);
+}
+void LogNodeLayoutResRecursive(YGNodeRef yogaNode) {
+  if (yogaNode == nullptr) {
+    return;
+  }
+  std::cout << "[ node: " << YGNodeGetTag(yogaNode);
+  std::cout << " x: " << YGNodeLayoutGetLeft(yogaNode);
+  std::cout << " y: " << YGNodeLayoutGetTop(yogaNode);
+  std::cout << " width: " << YGNodeLayoutGetWidth(yogaNode);
+  std::cout << " height: " << YGNodeLayoutGetHeight(yogaNode);
+  std::cout << " ]\n" << std::endl;
+  uint32_t childCount = YGNodeGetChildCount(yogaNode);
+  for (uint32_t i = 0; i < childCount; ++i) {
+    YGNodeRef childNode = YGNodeGetChild(yogaNode, i);
+    if (childNode != nullptr) {
+      LogNodeLayoutResRecursive(childNode);
+    }
+  }
 }
 
 void YGNodeFreeRecursive(YGNodeRef rootRef) {

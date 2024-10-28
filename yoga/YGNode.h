@@ -283,9 +283,14 @@ YG_EXPORT bool YGNodeGetAlwaysFormsContainingBlock(YGNodeConstRef node);
 
 /**
  * 给 node 设置个tag
-*/
+ */
 YG_EXPORT void YGNodeSetTag(YGNodeRef node, int i);
 YG_EXPORT int YGNodeGetTag(YGNodeRef node);
+
+/**
+ * 递归打印节点信息
+ */
+YG_EXPORT void LogNodeLayoutResRecursive(YGNodeRef yogaNode);
 
 /**
  * @deprecated

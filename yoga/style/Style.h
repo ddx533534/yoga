@@ -509,6 +509,7 @@ class YG_EXPORT Style {
   }
 
   float computeGapForAxis(FlexDirection axis, float ownerSize) const {
+    // 计算 gap， row 就计算列 gap，column 就计算行 gap
     auto gap = isRow(axis) ? computeColumnGap() : computeRowGap();
     return maxOrDefined(gap.resolve(ownerSize).unwrap(), 0.0f);
   }
