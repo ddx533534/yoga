@@ -143,6 +143,7 @@ static void computeFlexBasisForChild(
   } else {
     // Compute the flex basis and hypothetical main size (i.e. the clamped flex
     // basis).
+
     childWidthSizingMode = SizingMode::MaxContent;
     childHeightSizingMode = SizingMode::MaxContent;
 
@@ -990,6 +991,10 @@ static void resolveFlexibleLength(
     const uint32_t depth,
     const uint32_t generationCount) {
   const float originalFreeSpace = flexLine.layout.remainingFreeSpace;
+  logWithColor(
+      std::to_string(node->getTag()) +
+          "-------------- start resolveFlexibleLength ----------",
+      Color::GREEN);
   // First pass: detect the flex items whose min/max constraints trigger
   distributeFreeSpaceFirstPass(
       flexLine,
@@ -1021,6 +1026,10 @@ static void resolveFlexibleLength(
       generationCount);
 
   flexLine.layout.remainingFreeSpace = originalFreeSpace - distributedFreeSpace;
+  logWithColor(
+      std::to_string(node->getTag()) +
+          "-------------- end resolveFlexibleLength ----------",
+      Color::GREEN);
 }
 
 static void justifyMainAxis(
@@ -1038,7 +1047,10 @@ static void justifyMainAxis(
     const float availableInnerWidth,
     const bool performLayout) {
   const auto& style = node->style();
-
+  logWithColor(
+      std::to_string(node->getTag()) +
+          "-------------- start justifyMainAxis ----------",
+      Color::GREEN);
   const float leadingPaddingAndBorderMain =
       node->style().computeFlexStartPaddingAndBorder(
           mainAxis, direction, ownerWidth);
@@ -1201,6 +1213,10 @@ static void justifyMainAxis(
     flexLine.layout.crossDim =
         maxAscentForCurrentLine + maxDescentForCurrentLine;
   }
+  logWithColor(
+      std::to_string(node->getTag()) +
+          "-------------- end justifyMainAxis ----------",
+      Color::GREEN);
 }
 
 void printlnFlexLine(FlexLine& flexLine) {
@@ -1420,7 +1436,7 @@ static void calculateLayoutImpl(
   if (childCount == 0) {
     logWithColor(
         std::to_string(node->getTag()) +
-            "没有子节点，measureNodeWithoutChildren，直接 ret",
+            "没有子节点，measureNodeWithoutChildren后直接返回！",
         Color::YELLOW);
     measureNodeWithoutChildren(
         node,
@@ -1584,6 +1600,10 @@ static void calculateLayoutImpl(
 
   // Max main dimension of all the lines.
   float maxLineMainDim = 0;
+  logWithColor(
+      std::to_string(node->getTag()) +
+          "--------------进入循环！---------------",
+      Color::PURPLE);
   for (; startOfLineIterator != node->getLayoutChildren().end(); lineCount++) {
     auto flexLine = calculateFlexLine(
         node,
@@ -1791,6 +1811,10 @@ static void calculateLayoutImpl(
           // no need to stretch.
           if (!child->hasDefiniteLength(
                   dimension(crossAxis), availableInnerCrossDim)) {
+            logWithColor(
+                std::to_string(child->getTag()) + "子节点没有确定的副轴长度 " +
+                    std::to_string(availableInnerCrossDim),
+                Color::PURPLE);
             float childMainSize =
                 child->getLayout().measuredDimension(dimension(mainAxis));
             const auto& childStyle = child->style();
@@ -1891,7 +1915,10 @@ static void calculateLayoutImpl(
     maxLineMainDim =
         yoga::maxOrDefined(maxLineMainDim, flexLine.layout.mainDim);
   }
-
+  logWithColor(
+      std::to_string(node->getTag()) +
+          "--------------退出循环！---------------",
+      Color::PURPLE);
   // STEP 8: MULTI-LINE CONTENT ALIGNMENT
   // currentLead stores the size of the cross dim
   if (performLayout && (isNodeFlexWrap || isBaselineLayout(node))) {
@@ -2396,9 +2423,6 @@ bool calculateLayoutInternal(
   // std::cout << "cachedResults is null:" << (cachedResults == nullptr)
   //           << std::endl;
   if (!needToVisitNode && cachedResults != nullptr) {
-    logWithColor(
-        std::to_string(node->getTag()) + " 更新 setMeasuredDimension",
-        Color::RED);
     layout->setMeasuredDimension(
         Dimension::Width, cachedResults->computedWidth);
     layout->setMeasuredDimension(
@@ -2456,10 +2480,6 @@ bool calculateLayoutInternal(
           layout->measuredDimension(Dimension::Width);
       newCacheEntry->computedHeight =
           layout->measuredDimension(Dimension::Height);
-      logWithColor(
-          std::to_string(node->getTag()) + " 更新 setMeasuredDimension" +
-              std::to_string(newCacheEntry->computedWidth),
-          Color::RED);
     }
   }
 

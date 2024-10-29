@@ -8,7 +8,8 @@ const std::unordered_map<Color, std::string> colorMap = {
     {Color::GREEN, "\033[32m"},
     {Color::YELLOW, "\033[33m"},
     {Color::BLUE, "\033[34m"},
-    {Color::RESET, "\033[0m"}};
+    {Color::RESET, "\033[0m"},
+    {Color::PURPLE, "\033[35m"}};
 void logWithColor(const std::string& message, Color color) {
   std::cout << colorMap.at(color) << message << "\n" << "\033[0m" << std::endl;
 }
