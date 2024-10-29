@@ -91,6 +91,22 @@ calculate 布局结果如下：
 [ node: 3 x: 0 y: 0 width: 110 height: 110 ]
 ```
 
+## 1.yoga 布局流程
+
+![alt text](image-4.png)
+
+![整体流程](image-2.png)
+
+### 1.1 使用缓存
+
+![缓存](image-3.png)
+
+### 1.2 布局计算
+![布局计算](image-5.png)
+
+
+### 1.3 缓存更新
+
 ## 1.前置知识
 ### 1.1 [box-sizing](https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing)
 存在两种模式

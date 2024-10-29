@@ -2207,6 +2207,7 @@ static void calculateLayoutImpl(
   // As we only wrapped in normal direction yet, we need to reverse the
   // positions on wrap-reverse.
   if (performLayout && node->style().flexWrap() == Wrap::WrapReverse) {
+    //
     for (auto child : node->getLayoutChildren()) {
       if (child->style().positionType() != PositionType::Absolute) {
         child->setLayoutPosition(
@@ -2395,6 +2396,9 @@ bool calculateLayoutInternal(
   // std::cout << "cachedResults is null:" << (cachedResults == nullptr)
   //           << std::endl;
   if (!needToVisitNode && cachedResults != nullptr) {
+    logWithColor(
+        std::to_string(node->getTag()) + " 更新 setMeasuredDimension",
+        Color::RED);
     layout->setMeasuredDimension(
         Dimension::Width, cachedResults->computedWidth);
     layout->setMeasuredDimension(
@@ -2452,6 +2456,10 @@ bool calculateLayoutInternal(
           layout->measuredDimension(Dimension::Width);
       newCacheEntry->computedHeight =
           layout->measuredDimension(Dimension::Height);
+      logWithColor(
+          std::to_string(node->getTag()) + " 更新 setMeasuredDimension" +
+              std::to_string(newCacheEntry->computedWidth),
+          Color::RED);
     }
   }
 
