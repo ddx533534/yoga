@@ -17,6 +17,8 @@ void box_sizing_test() {
   YGNodeSetTag(root, 0);
   YGNodeStyleSetDirection(root, YGDirection::YGDirectionLTR);
   YGNodeStyleSetFlexDirection(root, YGFlexDirectionRow);
+  YGNodeStyleSetDisplay(root, YGDisplay::YGDisplayFlex);
+  // YGNodeStyleSetFlexWrap(root, YGWrap::YGWrapWrapReverse);
   // YGNodeStyleSetBoxSizing(root, YGBoxSizing::YGBoxSizingContentBox);
 
   /**
@@ -26,7 +28,7 @@ void box_sizing_test() {
   YGNodeSetTag(child1, 1);
   YGNodeStyleSetWidth(child1, 100.0);
   YGNodeStyleSetHeight(child1, 100.0);
-  YGNodeStyleSetMargin(child1, YGEdge::YGEdgeLeft, 10.0);
+  YGNodeStyleSetMargin(child1, YGEdge::YGEdgeStart, 10.0);
   // YGNodeStyleSetFlexBasis(child1, 200.0);
   // YGNodeStyleSetBorder(child1, YGEdge::YGEdgeAll, 10.0);
   // YGNodeStyleSetPadding(child1, YGEdge::YGEdgeAll, 10.0);
@@ -67,7 +69,7 @@ void box_sizing_test() {
   /**
    * 递归打印节点信息
    */
-  LogNodeLayoutResRecursive(root);
+  LogNodeLayoutResRecursive(root, 0);
 
   /**
    * 释放节点

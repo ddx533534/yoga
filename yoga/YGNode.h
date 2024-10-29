@@ -290,7 +290,7 @@ YG_EXPORT int YGNodeGetTag(YGNodeRef node);
 /**
  * 递归打印节点信息
  */
-YG_EXPORT void LogNodeLayoutResRecursive(YGNodeRef yogaNode);
+YG_EXPORT void LogNodeLayoutResRecursive(YGNodeRef yogaNode, int depth);
 
 /**
  * @deprecated

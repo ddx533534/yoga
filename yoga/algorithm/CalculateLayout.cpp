@@ -1418,6 +1418,10 @@ static void calculateLayoutImpl(
   const auto childCount = node->getLayoutChildCount();
   // 没有子节点走此分支
   if (childCount == 0) {
+    logWithColor(
+        std::to_string(node->getTag()) +
+            "没有子节点，measureNodeWithoutChildren，直接 ret",
+        Color::YELLOW);
     measureNodeWithoutChildren(
         node,
         direction,
@@ -1442,6 +1446,10 @@ static void calculateLayoutImpl(
           heightSizingMode,
           ownerWidth,
           ownerHeight)) {
+    logWithColor(
+        std::to_string(node->getTag()) +
+            " 不需要布局并且节点宽高固定，measureNodeWithFixedSize",
+        Color::YELLOW);
     return;
   }
 
@@ -1725,6 +1733,7 @@ static void calculateLayoutImpl(
         availableInnerWidth,
         performLayout);
 
+    // 计算出容器副轴的高度
     float containerCrossAxis = availableInnerCrossDim;
     if (sizingModeCrossDim == SizingMode::MaxContent ||
         sizingModeCrossDim == SizingMode::FitContent) {

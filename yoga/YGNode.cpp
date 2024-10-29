@@ -58,21 +58,27 @@ void YGNodeFree(const YGNodeRef nodeRef) {
   Event::publish<Event::NodeDeallocation>(node, {YGNodeGetConfig(node)});
   delete resolveRef(node);
 }
-void LogNodeLayoutResRecursive(YGNodeRef yogaNode) {
+void LogNodeLayoutResRecursive(YGNodeRef yogaNode, int depth) {
   if (yogaNode == nullptr) {
     return;
   }
+  std::string str = "";
+  for (int i = 0; i < depth; i++) {
+    str += "-";
+  }
+  std::cout << str;
   std::cout << "[ node: " << YGNodeGetTag(yogaNode);
   std::cout << " x: " << YGNodeLayoutGetLeft(yogaNode);
   std::cout << " y: " << YGNodeLayoutGetTop(yogaNode);
   std::cout << " width: " << YGNodeLayoutGetWidth(yogaNode);
   std::cout << " height: " << YGNodeLayoutGetHeight(yogaNode);
   std::cout << " ]\n" << std::endl;
+  depth++;
   uint32_t childCount = YGNodeGetChildCount(yogaNode);
   for (uint32_t i = 0; i < childCount; ++i) {
     YGNodeRef childNode = YGNodeGetChild(yogaNode, i);
     if (childNode != nullptr) {
-      LogNodeLayoutResRecursive(childNode);
+      LogNodeLayoutResRecursive(childNode, depth);
     }
   }
 }
