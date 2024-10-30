@@ -8,11 +8,13 @@
 #pragma once
 
 #include <yoga/algorithm/FlexDirection.h>
+#include <yoga/algorithm/Log.h>
 #include <yoga/enums/Dimension.h>
 #include <yoga/enums/FlexDirection.h>
 #include <yoga/node/Node.h>
 #include <yoga/numeric/Comparison.h>
 #include <yoga/numeric/FloatOptional.h>
+#include <iostream>
 
 namespace facebook::yoga {
 
@@ -27,6 +29,7 @@ inline float paddingAndBorderForAxis(
           axis, direction, widthSize);
 }
 
+// 限制在 min 和 max 之间
 inline FloatOptional boundAxisWithinMinAndMax(
     const yoga::Node* const node,
     const Direction direction,
@@ -48,6 +51,10 @@ inline FloatOptional boundAxisWithinMinAndMax(
     max = node->style().resolvedMaxDimension(
         direction, Dimension::Width, axisSize, widthSize);
   }
+  logWithColor(
+      "min: " + std::to_string(min.unwrap()) +
+          " max :" + std::to_string(max.unwrap()),
+      Color::BLUE);
 
   if (max >= FloatOptional{0} && value > max) {
     return max;

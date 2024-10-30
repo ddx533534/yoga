@@ -77,7 +77,99 @@ void box_sizing_test() {
   YGNodeFreeRecursive(root);
 }
 
+void test_one_exact_child() {
+  YGNodeRef root = YGNodeNew();
+  YGNodeSetTag(root, 0);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirection::YGFlexDirectionRow);
+
+  YGNodeRef child1 = YGNodeNew();
+  YGNodeSetTag(child1, 1);
+  YGNodeStyleSetMaxWidth(child1, 90.0);
+  YGNodeStyleSetWidth(child1, 100.0);
+  YGNodeStyleSetHeight(child1, 100.0);
+  YGNodeInsertChild(root, child1, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  /**
+   * 递归打印节点信息
+   */
+  LogNodeLayoutResRecursive(root, 0);
+
+  /**
+   * 释放节点
+   */
+  YGNodeFreeRecursive(root);
+}
+
+void test_two_exact_child() {
+  YGNodeRef root = YGNodeNew();
+  YGNodeSetTag(root, 0);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirection::YGFlexDirectionRow);
+
+  YGNodeRef child1 = YGNodeNew();
+  YGNodeSetTag(child1, 1);
+  // YGNodeStyleSetMaxWidth(child1, 90.0);
+  YGNodeStyleSetWidth(child1, 100.0);
+  YGNodeStyleSetHeight(child1, 100.0);
+  YGNodeStyleSetAlignSelf(child1, YGAlign::YGAlignCenter);
+  YGNodeInsertChild(root, child1, 0);
+
+  YGNodeRef child2 = YGNodeNew();
+  YGNodeSetTag(child2, 2);
+  // YGNodeStyleSetMaxWidth(child2, 90.0);
+  YGNodeStyleSetWidth(child2, 100.0);
+  YGNodeStyleSetHeight(child2, 100.0);
+  YGNodeStyleSetAlignSelf(child2, YGAlign::YGAlignCenter);
+  YGNodeInsertChild(root, child2, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  /**
+   * 递归打印节点信息
+   */
+  LogNodeLayoutResRecursive(root, 0);
+
+  /**
+   * 释放节点
+   */
+  YGNodeFreeRecursive(root);
+}
+
+void test_two_unkown_child() {
+  YGNodeRef root = YGNodeNew();
+  YGNodeSetTag(root, 0);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirection::YGFlexDirectionRow);
+
+  YGNodeRef child1 = YGNodeNew();
+  YGNodeSetTag(child1, 1);
+  // YGNodeStyleSetMaxWidth(child1, 90.0);
+  YGNodeStyleSetWidth(child1, 100.0);
+  YGNodeStyleSetHeight(child1, 100.0);
+  YGNodeInsertChild(root, child1, 0);
+
+  YGNodeRef child2 = YGNodeNew();
+  YGNodeSetTag(child2, 2);
+  // YGNodeStyleSetMaxWidth(child2, 90.0);
+  // YGNodeStyleSetWidth(child2, 100.0);
+  // YGNodeStyleSetHeight(child2, 100.0);
+  YGNodeInsertChild(root, child2, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  /**
+   * 递归打印节点信息
+   */
+  LogNodeLayoutResRecursive(root, 0);
+
+  /**
+   * 释放节点
+   */
+  YGNodeFreeRecursive(root);
+}
+
 int main(int argc, const char** argv) {
-  box_sizing_test();
+  // box_sizing_test();
+  test_two_exact_child();
   return 0;
 }

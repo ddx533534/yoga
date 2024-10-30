@@ -33,8 +33,6 @@
 #include <yoga/numeric/FloatOptional.h>
 #include <iostream>
 
-#include <yoga/algorithm/Log.h>
-
 namespace facebook::yoga {
 
 std::atomic<uint32_t> gCurrentGenerationCount(0);
@@ -122,7 +120,7 @@ static void computeFlexBasisForChild(
     const FloatOptional paddingAndBorder =
         FloatOptional(paddingAndBorderForAxis(
             child, FlexDirection::Row, direction, ownerWidth));
-
+    // 更新 child 的 layout 中的flexBasis
     child->setLayoutComputedFlexBasis(yoga::maxOrDefined(
         child->getResolvedDimension(
             direction, Dimension::Width, ownerWidth, ownerWidth),
@@ -391,7 +389,31 @@ static void measureNodeWithMeasureFunc(
         Dimension::Height);
   }
 }
-
+void printlnFlexLine(FlexLine& flexLine) {
+  std::cout << "FlexLine {" << std::endl;
+  std::cout << "  itemsInFlow: [";
+  for (const auto& item : flexLine.itemsInFlow) {
+    std::cout << item->getTag() << ", ";
+  }
+  std::cout << "]," << std::endl;
+  std::cout << "  sizeConsumed: " << flexLine.sizeConsumed << "," << std::endl;
+  std::cout << "  endOfLineIndex: " << flexLine.endOfLineIndex << ","
+            << std::endl;
+  std::cout << "  numberOfAutoMargins: " << flexLine.numberOfAutoMargins << ","
+            << std::endl;
+  std::cout << "  layout: ";
+  std::cout << "FlexLineRunningLayout {" << std::endl;
+  std::cout << "  remainingFreeSpace: " << flexLine.layout.remainingFreeSpace
+            << "," << std::endl;
+  std::cout << "  totalFlexGrowFactors: "
+            << flexLine.layout.totalFlexGrowFactors << "," << std::endl;
+  std::cout << "  totalFlexShrinkScaledFactors: "
+            << flexLine.layout.totalFlexShrinkScaledFactors << std::endl;
+  std::cout << "  mainDim: " << flexLine.layout.mainDim << "," << std::endl;
+  std::cout << "  crossDim: " << flexLine.layout.crossDim << "," << std::endl;
+  std::cout << "}" << std::endl;
+  std::cout << "}" << std::endl;
+}
 // For nodes with no children, use the available values if they were provided,
 // or the minimum size as indicated by the padding and border sizes.
 static void measureNodeWithoutChildren(
@@ -527,6 +549,9 @@ static float calculateAvailableInnerDimension(
   // Max dimension overrides predefined dimension value; Min dimension in turn
   // overrides both of the above
   if (yoga::isDefined(availableInnerDim)) {
+    logWithColor(
+        " availableInnerDim is defined: " + std::to_string(availableInnerDim),
+        Color::GREEN);
     // We want to make sure our available height does not violate min and max
     // constraints
     const FloatOptional minDimensionOptional =
@@ -600,7 +625,7 @@ static float computeFlexBasisForChildren(
       continue;
     }
     if (performLayout) {
-      // Set the initial position (relative to the owner).
+      // Set the initial position (relative to the owner). 设置初始位置
       const Direction childDirection = child->resolveDirection(direction);
       child->setPosition(
           childDirection, availableInnerWidth, availableInnerHeight);
@@ -667,7 +692,9 @@ static float distributeFreeSpaceSecondPass(
   float deltaFreeSpace = 0;
   const bool isMainAxisRow = isRow(mainAxis);
   const bool isNodeFlexWrap = node->style().flexWrap() != Wrap::NoWrap;
-
+  logWithColor(
+      " ----------- start distributeFreeSpaceSecondPass -------- ",
+      Color::BLUE);
   for (auto currentLineChild : flexLine.itemsInFlow) {
     childFlexBasis = boundAxisWithinMinAndMax(
                          currentLineChild,
@@ -857,6 +884,8 @@ static float distributeFreeSpaceSecondPass(
         node->getLayout().hadOverflow() ||
         currentLineChild->getLayout().hadOverflow());
   }
+  logWithColor(
+      " ----------- end distributeFreeSpaceSecondPass -------- ", Color::BLUE);
   return deltaFreeSpace;
 }
 
@@ -876,6 +905,9 @@ static void distributeFreeSpaceFirstPass(
   float baseMainSize = 0;
   float boundMainSize = 0;
   float deltaFreeSpace = 0;
+  logWithColor(
+      " ----------- start distributeFreeSpaceFirstPass -------- ", Color::BLUE);
+  printlnFlexLine(flexLine);
 
   for (auto currentLineChild : flexLine.itemsInFlow) {
     float childFlexBasis = boundAxisWithinMinAndMax(
@@ -947,7 +979,11 @@ static void distributeFreeSpaceFirstPass(
       }
     }
   }
+
   flexLine.layout.remainingFreeSpace -= deltaFreeSpace;
+  printlnFlexLine(flexLine);
+  logWithColor(
+      " ----------- end distributeFreeSpaceFirstPass -------- ", Color::BLUE);
 }
 
 // Do two passes over the flex items to figure out how to distribute the
@@ -1150,6 +1186,7 @@ static void justifyMainAxis(
                 << (childLayout.position(flexStartEdge(mainAxis)) +
                     flexLine.layout.mainDim)
                 << std::endl;
+      printlnFlexLine(flexLine);
       child->setLayoutPosition(
           childLayout.position(flexStartEdge(mainAxis)) +
               flexLine.layout.mainDim,
@@ -1217,28 +1254,6 @@ static void justifyMainAxis(
       std::to_string(node->getTag()) +
           "-------------- end justifyMainAxis ----------",
       Color::GREEN);
-}
-
-void printlnFlexLine(FlexLine& flexLine) {
-  std::cout << "FlexLine {" << std::endl;
-  std::cout << "  itemsInFlow: [";
-  for (const auto& item : flexLine.itemsInFlow) {
-    std::cout << item->getTag() << ", ";
-  }
-  std::cout << "]," << std::endl;
-  std::cout << "  sizeConsumed: " << flexLine.sizeConsumed << "," << std::endl;
-  std::cout << "  endOfLineIndex: " << flexLine.endOfLineIndex << ","
-            << std::endl;
-  std::cout << "  numberOfAutoMargins: " << flexLine.numberOfAutoMargins << ","
-            << std::endl;
-  std::cout << "  layout: ";
-  std::cout << "FlexLineRunningLayout {" << std::endl;
-  std::cout << "  totalFlexGrowFactors: "
-            << flexLine.layout.totalFlexGrowFactors << "," << std::endl;
-  std::cout << "  totalFlexShrinkScaledFactors: "
-            << flexLine.layout.totalFlexShrinkScaledFactors << std::endl;
-  std::cout << "}" << std::endl;
-  std::cout << "}" << std::endl;
 }
 
 //
@@ -1434,10 +1449,6 @@ static void calculateLayoutImpl(
   const auto childCount = node->getLayoutChildCount();
   // 没有子节点走此分支
   if (childCount == 0) {
-    logWithColor(
-        std::to_string(node->getTag()) +
-            "没有子节点，measureNodeWithoutChildren后直接返回！",
-        Color::YELLOW);
     measureNodeWithoutChildren(
         node,
         direction,
@@ -1447,6 +1458,11 @@ static void calculateLayoutImpl(
         heightSizingMode,
         ownerWidth,
         ownerHeight);
+    logWithColor(
+        std::to_string(node->getTag()) +
+            "没有子节点，measureNodeWithoutChildren后直接返回！" +
+            std::to_string(YGNodeStyleGetWidth(node).value),
+        Color::YELLOW);
     return;
   }
 
@@ -1572,7 +1588,8 @@ static void calculateLayoutImpl(
         static_cast<float>(childCount - 1);
   }
 
-  // 主轴上计算的总长度是否大于可用空间
+  // 主轴不是 maxcontent 模式，则计算的总长度是否大于可用空间；因为 maxcontent
+  // 会尽量包含content
   const bool mainAxisOverflows =
       (sizingModeMainDim != SizingMode::MaxContent) &&
       totalMainDim > availableInnerMainDim;
@@ -1674,7 +1691,7 @@ static void calculateLayoutImpl(
           flexLine.sizeConsumed > maxInnerMainDim) {
         availableInnerMainDim = maxInnerMainDim;
       } else {
-        // 可用宽高均为 Nan
+        // max 和 min 均为 Nan
         bool useLegacyStretchBehaviour =
             node->hasErrata(Errata::StretchFlexBasis);
 
@@ -1685,7 +1702,7 @@ static void calculateLayoutImpl(
               node->resolveFlexGrow() == 0))) {
           // If we don't have any children to flex or we can't flex the node
           // itself, space we've used is all space we need. Root node also
-          // should be shrunk to minimum
+          // should be shrunk to minimum!!!
           availableInnerMainDim = flexLine.sizeConsumed;
         }
 
@@ -1706,6 +1723,7 @@ static void calculateLayoutImpl(
     // 跳过！
     if (!canSkipFlex) {
       std::cout << "node tag: " << node->getTag() << "解析 flexible 长度"
+                << std::to_string(flexLine.layout.remainingFreeSpace)
                 << std::endl;
       resolveFlexibleLength(
           node,

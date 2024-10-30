@@ -13,4 +13,8 @@ const std::unordered_map<Color, std::string> colorMap = {
 void logWithColor(const std::string& message, Color color) {
   std::cout << colorMap.at(color) << message << "\n" << "\033[0m" << std::endl;
 }
+void log(const std::string& message) {
+  std::cout << message << "\n" << "\033[0m" << std::endl;
+}
+
 } // namespace facebook::yoga
