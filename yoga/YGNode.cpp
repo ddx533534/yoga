@@ -72,6 +72,7 @@ void LogNodeLayoutResRecursive(YGNodeRef yogaNode, int depth) {
   std::cout << " y: " << YGNodeLayoutGetTop(yogaNode);
   std::cout << " width: " << YGNodeLayoutGetWidth(yogaNode);
   std::cout << " height: " << YGNodeLayoutGetHeight(yogaNode);
+  std::cout << " flex: " << YGNodeStyleGetDisplay(yogaNode);
   std::cout << " ]\n" << std::endl;
   depth++;
   uint32_t childCount = YGNodeGetChildCount(yogaNode);

@@ -168,8 +168,121 @@ void test_two_unkown_child() {
   YGNodeFreeRecursive(root);
 }
 
+// 用于将 YGMeasureMode 转换为字符串
+const char* measureModeToString(YGMeasureMode mode) {
+  switch (mode) {
+    case YGMeasureModeUndefined:
+      return "Undefined";
+    case YGMeasureModeExactly:
+      return "Exactly";
+    case YGMeasureModeAtMost:
+      return "AtMost";
+    default:
+      return "Unknown";
+  }
+}
+static YGSize _measure(
+    YGNodeConstRef node,
+    float width,
+    YGMeasureMode widthMode,
+    float height,
+    YGMeasureMode heightMode) {
+  // 打印信息
+  std::cout << "Width: " << width << ", "
+            << "Width Mode: " << measureModeToString(widthMode) << ", "
+            << "Height: " << height << ", "
+            << "Height Mode: " << measureModeToString(heightMode) << std::endl;
+  return (YGSize){
+
+      .width = 50,
+      .height = 20,
+  };
+}
+void test_one_measure_child() {
+  YGNodeRef root = YGNodeNew();
+  YGNodeSetTag(root, 0);
+  YGNodeStyleSetFlexDirection(root, YGFlexDirection::YGFlexDirectionRow);
+  YGNodeStyleSetWidth(root, 100.0);
+  YGNodeStyleSetHeight(root, 100.0);
+
+  YGNodeRef child1 = YGNodeNew();
+  YGNodeSetTag(child1, 1);
+  YGNodeSetMeasureFunc(child1, _measure);
+  YGNodeInsertChild(root, child1, 0);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  /**
+   * 递归打印节点信息
+   */
+  LogNodeLayoutResRecursive(root, 0);
+
+  /**
+   * 释放节点
+   */
+  YGNodeFreeRecursive(root);
+}
+
+void test_display_none() {
+  YGNodeRef root = YGNodeNew();
+  YGNodeSetTag(root, 0);
+  YGNodeStyleSetWidth(root, 100.0);
+  YGNodeStyleSetHeight(root, 100.0);
+
+  YGNodeRef child1 = YGNodeNew();
+  YGNodeSetTag(child1, 1);
+  YGNodeStyleSetWidth(child1, 40.0);
+  YGNodeStyleSetHeight(child1, 40.0);
+  YGNodeInsertChild(root, child1, 0);
+  YGNodeStyleSetDisplay(child1, YGDisplay::YGDisplayNone);
+
+  YGNodeRef child2 = YGNodeNew();
+  YGNodeSetTag(child2, 2);
+  YGNodeStyleSetWidth(child2, 30.0);
+  YGNodeStyleSetHeight(child2, 30.0);
+  YGNodeInsertChild(child1, child2, 0);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  LogNodeLayoutResRecursive(root, 0);
+
+  YGNodeStyleSetWidth(child2, 50.0);
+  YGNodeStyleSetHeight(child2, 50.0);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  LogNodeLayoutResRecursive(root, 0);
+
+  YGNodeStyleSetDisplay(child1, YGDisplay::YGDisplayFlex);
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+  LogNodeLayoutResRecursive(root, 0);
+
+  /**
+   * 释放节点
+   */
+  YGNodeFreeRecursive(root);
+}
+
+void test_absolute_display_none() {
+  YGNodeRef root = YGNodeNew();
+  YGNodeSetTag(root, 0);
+  YGNodeStyleSetWidth(root, 100.0);
+  YGNodeStyleSetHeight(root, 100.0);
+
+  YGNodeRef child1 = YGNodeNew();
+  YGNodeSetTag(child1, 1);
+  YGNodeStyleSetWidth(child1, 40.0);
+  YGNodeStyleSetHeight(child1, 40.0);
+  YGNodeInsertChild(root, child1, 0);
+  YGNodeStyleSetDisplay(child1, YGDisplay::YGDisplayNone);
+  YGNodeStyleSetPositionType(child1, YGPositionType::YGPositionTypeAbsolute);
+
+  YGNodeCalculateLayout(root, YGUndefined, YGUndefined, YGDirectionLTR);
+
+  /**
+   * 递归打印节点信息
+   */
+  LogNodeLayoutResRecursive(root, 0);
+}
+
 int main(int argc, const char** argv) {
   // box_sizing_test();
-  test_two_exact_child();
+  test_absolute_display_none();
   return 0;
 }

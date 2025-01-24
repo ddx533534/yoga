@@ -319,6 +319,7 @@ static void measureNodeWithMeasureFunc(
 
   if (widthSizingMode == SizingMode::StretchFit &&
       heightSizingMode == SizingMode::StretchFit) {
+    // 如果文本宽高定义了，就不用费心调整文本大小了
     // Don't bother sizing the text if both dimensions are already defined.
     node->setLayoutMeasuredDimension(
         boundAxis(
